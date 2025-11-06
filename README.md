@@ -1,15 +1,16 @@
-# 💬 Chatly - Firebase asosidagi Chat App
+# 💬 Chatly v2 - Advanced Firebase Chat App
 
-React Native (Expo) va Firebase bilan yaratilgan real-time chat ilovasi.
+React Native (Expo) va Firebase bilan yaratilgan kengaytirilgan real-time chat ilovasi.
 
 ## ⚙️ Texnologiyalar
 
 - React Native (Expo)
 - TypeScript
 - Firebase Authentication (Email/Password)
-- Firebase Firestore (Database)
-- Firebase Storage (Rasm saqlash)
+- Firebase Firestore (Database + Ban system)
+- Firebase Storage (Profil va chat rasmlari)
 - Expo Notifications (Push xabarlar)
+- Expo ImagePicker (Rasm yuborish)
 - React Navigation
 
 ## 🚀 Boshlash
@@ -61,15 +62,22 @@ npx expo start
 
 ## 📱 Funksiyalar
 
+### Asosiy funksiyalar:
 - ✅ Email bilan ro'yxatdan o'tish va kirish
-- ✅ Foydalanuvchi profili (avatar, bio)
-- ✅ Barcha foydalanuvchilar ro'yxati
+- ✅ Gender va yosh bilan ro'yxat (13+ yosh)
+- ✅ Kengaytirilgan profil (avatar, bio, age, interests, location)
+- ✅ Real-time chat (matn + rasm)
 - ✅ Online/Offline holat ko'rsatkichi
-- ✅ Real-time chat
-- ✅ Profil tahrirlash
-- ✅ Rasm yuklash
 - ✅ Push notifications
-- ✅ Chiroyli va zamonaviy UI
+
+### Yangi v2 funksiyalari:
+- 🆕 **Gender Filter**: Erkaklar default ayollarni, ayollar erkaklarni ko'radi
+- 🆕 **Filterni o'zgartirish**: Hammasi, faqat erkaklar yoki faqat ayollar
+- 🆕 **Ban/Block funksiyasi**: Istalgan foydalanuvchini bloklash
+- 🆕 **Chat'da rasm yuborish**: Expo ImagePicker orqali
+- 🆕 **Sozlamalar ekrani**: Filter va bildirishnomalarni boshqarish
+- 🆕 **Kengaytirilgan profil**: Yosh, qiziqishlar, manzil
+- ✅ Chiroyli va zamonaviy Material Design UI
 
 ## 📁 Loyiha tuzilmasi
 
@@ -91,10 +99,17 @@ App.tsx             - Asosiy fayl
 users/{userId}
   - name: string
   - bio: string
+  - gender: 'male' | 'female'
+  - age: number (optional)
+  - interests: string[] (optional)
+  - location: string (optional)
   - photoURL: string
   - isOnline: boolean
   - lastSeen: timestamp
   - email: string
+  - preferences:
+      - showGender: 'male' | 'female' | 'all'
+      - notificationsEnabled: boolean
 ```
 
 ### Chats Collection
@@ -105,8 +120,17 @@ chats/{chatId}
 
   messages/{messageId}
     - senderId: string
-    - text: string
+    - text: string (optional)
+    - imageURL: string (optional)
     - createdAt: timestamp
+```
+
+### Bans Collection (New in v2)
+```
+bans/{banId}
+  - bannedBy: userId
+  - bannedUser: userId
+  - createdAt: timestamp
 ```
 
 ## 📦 Build qilish

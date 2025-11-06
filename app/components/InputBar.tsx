@@ -11,9 +11,10 @@ import { Ionicons } from '@expo/vector-icons';
 
 interface InputBarProps {
   onSend: (text: string) => void;
+  onSendImage?: () => void;
 }
 
-const InputBar: React.FC<InputBarProps> = ({ onSend }) => {
+const InputBar: React.FC<InputBarProps> = ({ onSend, onSendImage }) => {
   const [text, setText] = useState('');
 
   const handleSend = () => {
@@ -29,6 +30,11 @@ const InputBar: React.FC<InputBarProps> = ({ onSend }) => {
       keyboardVerticalOffset={90}
     >
       <View style={styles.container}>
+        {onSendImage && (
+          <TouchableOpacity style={styles.imageButton} onPress={onSendImage}>
+            <Ionicons name="image" size={24} color="#6200EE" />
+          </TouchableOpacity>
+        )}
         <TextInput
           style={styles.input}
           placeholder="Xabar yozing..."
@@ -57,6 +63,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E8E8E8',
     alignItems: 'center',
+  },
+  imageButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 4,
   },
   input: {
     flex: 1,

@@ -1,19 +1,31 @@
+// Gender tipi
+export type Gender = 'male' | 'female';
+
 // Foydalanuvchi tipi
 export interface User {
   id: string;
   name: string;
   bio: string;
+  gender: Gender;
+  age?: number;
+  interests?: string[];
+  location?: string;
   photoURL: string;
   isOnline: boolean;
   lastSeen: number;
   email: string;
+  preferences: {
+    showGender: 'male' | 'female' | 'all';
+    notificationsEnabled: boolean;
+  };
 }
 
 // Xabar tipi
 export interface Message {
   id: string;
   senderId: string;
-  text: string;
+  text?: string;
+  imageURL?: string;
   createdAt: number;
 }
 
@@ -22,6 +34,14 @@ export interface Chat {
   id: string;
   members: string[];
   lastMessage?: Message;
+}
+
+// Ban tipi
+export interface Ban {
+  id: string;
+  bannedBy: string;
+  bannedUser: string;
+  createdAt: number;
 }
 
 // Navigation tiplari
@@ -34,6 +54,7 @@ export type RootStackParamList = {
 export type MainTabParamList = {
   Home: undefined;
   Profile: undefined;
+  Settings: undefined;
 };
 
 export type HomeStackParamList = {
@@ -44,4 +65,8 @@ export type HomeStackParamList = {
 export type ProfileStackParamList = {
   ProfileView: undefined;
   EditProfile: undefined;
+};
+
+export type SettingsStackParamList = {
+  SettingsView: undefined;
 };

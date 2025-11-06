@@ -12,7 +12,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../types';
+import { RootStackParamList, Gender } from '../types';
 import { registerUser } from '../services/authService';
 
 type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Register'>;
@@ -26,6 +26,8 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [gender, setGender] = useState<Gender>('male');
+  const [age, setAge] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
@@ -44,9 +46,15 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       return;
     }
 
+    const ageNum = age ? parseInt(age) : undefined;
+    if (age && (ageNum === undefined || ageNum < 13 || ageNum > 100)) {
+      Alert.alert('Xato', 'Yoshingizni to\'g\'ri kiriting (13-100)');
+      return;
+    }
+
     setLoading(true);
     try {
-      await registerUser(email, password, name);
+      await registerUser(email, password, name, gender, ageNum);
       Alert.alert('Muvaffaqiyatli', 'Ro\'yxatdan o\'tdingiz!');
     } catch (error: any) {
       Alert.alert('Xato', error.message);
@@ -95,6 +103,51 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
+          />
+
+          <Text style={styles.label}>Jinsingiz</Text>
+          <View style={styles.genderContainer}>
+            <TouchableOpacity
+              style={[
+                styles.genderButton,
+                gender === 'male' && styles.genderButtonActive,
+              ]}
+              onPress={() => setGender('male')}
+            >
+              <Text
+                style={[
+                  styles.genderText,
+                  gender === 'male' && styles.genderTextActive,
+                ]}
+              >
+                Erkak
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.genderButton,
+                gender === 'female' && styles.genderButtonActive,
+              ]}
+              onPress={() => setGender('female')}
+            >
+              <Text
+                style={[
+                  styles.genderText,
+                  gender === 'female' && styles.genderTextActive,
+                ]}
+              >
+                Ayol
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Yoshingiz (ixtiyoriy)"
+            value={age}
+            onChangeText={setAge}
+            keyboardType="number-pad"
+            maxLength={3}
           />
 
           <TouchableOpacity
@@ -147,6 +200,38 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 32,
     textAlign: 'center',
+  },
+  label: {
+    fontSize: 14,
+    color: '#999',
+    marginBottom: 8,
+    marginTop: 8,
+  },
+  genderContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    gap: 12,
+  },
+  genderButton: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  genderButtonActive: {
+    backgroundColor: '#E8D5FF',
+    borderColor: '#6200EE',
+  },
+  genderText: {
+    fontSize: 16,
+    color: '#666',
+    fontWeight: '600',
+  },
+  genderTextActive: {
+    color: '#6200EE',
   },
   input: {
     backgroundColor: '#F5F5F5',

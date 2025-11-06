@@ -6,6 +6,7 @@ import {
   setDoc,
   addDoc,
   updateDoc,
+  deleteDoc,
   query,
   where,
   orderBy,
@@ -14,7 +15,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
-import { User, Message, Chat } from '../types';
+import { User, Message, Chat, Ban } from '../types';
 
 // Foydalanuvchi ma'lumotlarini olish
 export const getUserData = async (userId: string): Promise<User | null> => {
@@ -113,7 +114,7 @@ export const getOrCreateChat = async (
   }
 };
 
-// Xabar yuborish
+// Matn xabari yuborish
 export const sendMessage = async (
   chatId: string,
   senderId: string,
@@ -127,6 +128,24 @@ export const sendMessage = async (
     });
   } catch (error) {
     console.error('Error sending message:', error);
+    throw error;
+  }
+};
+
+// Rasm xabari yuborish
+export const sendImageMessage = async (
+  chatId: string,
+  senderId: string,
+  imageURL: string
+): Promise<void> => {
+  try {
+    await addDoc(collection(db, 'chats', chatId, 'messages'), {
+      senderId,
+      imageURL,
+      createdAt: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error('Error sending image message:', error);
     throw error;
   }
 };
@@ -147,9 +166,150 @@ export const subscribeToMessages = (
         id: doc.id,
         senderId: data.senderId,
         text: data.text,
+        imageURL: data.imageURL,
         createdAt: data.createdAt ? (data.createdAt as Timestamp).toMillis() : Date.now(),
       });
     });
     callback(messages);
   });
+};
+
+// ========== BAN FUNKSIYALARI ==========
+
+// Foydalanuvchini bloklash
+export const banUser = async (
+  bannedBy: string,
+  bannedUser: string
+): Promise<void> => {
+  try {
+    await addDoc(collection(db, 'bans'), {
+      bannedBy,
+      bannedUser,
+      createdAt: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error('Error banning user:', error);
+    throw error;
+  }
+};
+
+// Blokdan chiqarish
+export const unbanUser = async (
+  bannedBy: string,
+  bannedUser: string
+): Promise<void> => {
+  try {
+    const bansRef = collection(db, 'bans');
+    const q = query(
+      bansRef,
+      where('bannedBy', '==', bannedBy),
+      where('bannedUser', '==', bannedUser)
+    );
+
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach(async (docSnapshot) => {
+      await deleteDoc(doc(db, 'bans', docSnapshot.id));
+    });
+  } catch (error) {
+    console.error('Error unbanning user:', error);
+    throw error;
+  }
+};
+
+// Bloklangan foydalanuvchilar ro'yxati
+export const getBannedUsers = async (userId: string): Promise<string[]> => {
+  try {
+    const bansRef = collection(db, 'bans');
+    const q = query(bansRef, where('bannedBy', '==', userId));
+
+    const querySnapshot = await getDocs(q);
+    const bannedUserIds: string[] = [];
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      bannedUserIds.push(data.bannedUser);
+    });
+
+    return bannedUserIds;
+  } catch (error) {
+    console.error('Error getting banned users:', error);
+    return [];
+  }
+};
+
+// Foydalanuvchi bloklangan yoki yo'q tekshirish
+export const isUserBanned = async (
+  checkingUserId: string,
+  targetUserId: string
+): Promise<boolean> => {
+  try {
+    const bansRef = collection(db, 'bans');
+
+    // Ikki tomonlama tekshirish: hech biri boshqasini bloklamagan bo'lishi kerak
+    const q1 = query(
+      bansRef,
+      where('bannedBy', '==', checkingUserId),
+      where('bannedUser', '==', targetUserId)
+    );
+
+    const q2 = query(
+      bansRef,
+      where('bannedBy', '==', targetUserId),
+      where('bannedUser', '==', checkingUserId)
+    );
+
+    const [snapshot1, snapshot2] = await Promise.all([
+      getDocs(q1),
+      getDocs(q2),
+    ]);
+
+    return !snapshot1.empty || !snapshot2.empty;
+  } catch (error) {
+    console.error('Error checking if user is banned:', error);
+    return false;
+  }
+};
+
+// Gender filter bilan foydalanuvchilarni olish
+export const getUsersByGenderFilter = async (
+  currentUserId: string,
+  genderFilter: 'male' | 'female' | 'all'
+): Promise<User[]> => {
+  try {
+    // Bloklangan foydalanuvchilarni olish
+    const bannedUserIds = await getBannedUsers(currentUserId);
+
+    const usersRef = collection(db, 'users');
+    let q = query(usersRef);
+
+    // Gender filter qo'llash
+    if (genderFilter !== 'all') {
+      q = query(usersRef, where('gender', '==', genderFilter));
+    }
+
+    const querySnapshot = await getDocs(q);
+    const users: User[] = [];
+
+    // Men bloklaganlar va meni bloklaganlar va o'zim filterlash
+    for (const docSnapshot of querySnapshot.docs) {
+      const userId = docSnapshot.id;
+
+      // O'zimni o'chirish
+      if (userId === currentUserId) continue;
+
+      // Bloklangan foydalanuvchilarni o'chirish
+      if (bannedUserIds.includes(userId)) continue;
+
+      // Meni bloklagan foydalanuvchilarni tekshirish
+      const isBanned = await isUserBanned(currentUserId, userId);
+      if (isBanned) continue;
+
+      users.push({ id: userId, ...docSnapshot.data() } as User);
+    }
+
+    return users;
+  } catch (error) {
+    console.error('Error getting users by gender filter:', error);
+    return [];
+  }
 };

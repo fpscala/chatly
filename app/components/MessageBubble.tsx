@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Message } from '../types';
 
 interface MessageBubbleProps {
@@ -13,6 +13,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwnMessage }) 
     return date.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
   };
 
+  const textColor = isOwnMessage ? '#FFFFFF' : '#000000';
+
   return (
     <View
       style={[
@@ -20,8 +22,21 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwnMessage }) 
         isOwnMessage ? styles.ownMessage : styles.otherMessage,
       ]}
     >
-      <Text style={styles.text}>{message.text}</Text>
-      <Text style={styles.time}>{formatTime(message.createdAt)}</Text>
+      {message.imageURL && (
+        <TouchableOpacity activeOpacity={0.9}>
+          <Image
+            source={{ uri: message.imageURL }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+        </TouchableOpacity>
+      )}
+      {message.text && (
+        <Text style={[styles.text, { color: textColor }]}>{message.text}</Text>
+      )}
+      <Text style={[styles.time, { color: isOwnMessage ? '#E0E0E0' : '#666' }]}>
+        {formatTime(message.createdAt)}
+      </Text>
     </View>
   );
 };
@@ -42,13 +57,17 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     backgroundColor: '#E8E8E8',
   },
+  image: {
+    width: 200,
+    height: 200,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
   text: {
     fontSize: 16,
-    color: '#000',
   },
   time: {
     fontSize: 11,
-    color: '#666',
     marginTop: 4,
     alignSelf: 'flex-end',
   },

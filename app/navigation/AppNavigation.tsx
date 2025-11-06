@@ -11,6 +11,7 @@ import HomeScreen from '../screens/HomeScreen';
 import ChatScreen from '../screens/ChatScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 // Types
 import {
@@ -18,12 +19,14 @@ import {
   MainTabParamList,
   HomeStackParamList,
   ProfileStackParamList,
+  SettingsStackParamList,
 } from '../types';
 
 const RootStack = createStackNavigator<RootStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
 const HomeStack = createStackNavigator<HomeStackParamList>();
 const ProfileStack = createStackNavigator<ProfileStackParamList>();
+const SettingsStack = createStackNavigator<SettingsStackParamList>();
 
 // Home Stack Navigator
 const HomeNavigator = () => {
@@ -61,6 +64,19 @@ const ProfileNavigator = () => {
   );
 };
 
+// Settings Stack Navigator
+const SettingsNavigator = () => {
+  return (
+    <SettingsStack.Navigator>
+      <SettingsStack.Screen
+        name="SettingsView"
+        component={SettingsScreen}
+        options={{ title: 'Sozlamalar' }}
+      />
+    </SettingsStack.Navigator>
+  );
+};
+
 // Main Tab Navigator
 const MainNavigator = () => {
   return (
@@ -88,6 +104,16 @@ const MainNavigator = () => {
           tabBarLabel: 'Profil',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
+          ),
+        }}
+      />
+      <MainTab.Screen
+        name="Settings"
+        component={SettingsNavigator}
+        options={{
+          tabBarLabel: 'Sozlamalar',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings" size={size} color={color} />
           ),
         }}
       />

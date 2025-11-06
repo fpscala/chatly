@@ -6,14 +6,18 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { RouteProp } from '@react-navigation/native';
 import { HomeStackParamList, Message } from '../types';
 import {
   getOrCreateChat,
   sendMessage,
+  sendImageMessage,
   subscribeToMessages,
 } from '../services/firestoreService';
+import { uploadChatImage } from '../services/storageService';
 import { auth } from '../firebaseConfig';
 import MessageBubble from '../components/MessageBubble';
 import InputBar from '../components/InputBar';
@@ -29,11 +33,20 @@ const ChatScreen: React.FC<Props> = ({ route }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatId, setChatId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     initializeChat();
+    requestPermissions();
   }, [userId]);
+
+  const requestPermissions = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Ruxsat kerak', 'Rasm yuborish uchun galereyaga ruxsat bering');
+    }
+  };
 
   useEffect(() => {
     if (!chatId) return;
@@ -74,6 +87,36 @@ const ChatScreen: React.FC<Props> = ({ route }) => {
     }
   };
 
+  const handleSendImage = async () => {
+    if (!chatId || !auth.currentUser?.uid) return;
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.7,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setUploading(true);
+        const imageUri = result.assets[0].uri;
+
+        // Rasmni Firebase Storage'ga yuklash
+        const imageURL = await uploadChatImage(auth.currentUser.uid, imageUri);
+
+        // Rasm xabarini yuborish
+        await sendImageMessage(chatId, auth.currentUser.uid, imageURL);
+
+        setUploading(false);
+      }
+    } catch (error) {
+      console.error('Error sending image:', error);
+      Alert.alert('Xato', 'Rasm yuklashda xatolik yuz berdi');
+      setUploading(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -103,7 +146,12 @@ const ChatScreen: React.FC<Props> = ({ route }) => {
           flatListRef.current?.scrollToEnd({ animated: true })
         }
       />
-      <InputBar onSend={handleSendMessage} />
+      {uploading && (
+        <View style={styles.uploadingContainer}>
+          <ActivityIndicator size="small" color="#6200EE" />
+        </View>
+      )}
+      <InputBar onSend={handleSendMessage} onSendImage={handleSendImage} />
     </KeyboardAvoidingView>
   );
 };
@@ -121,6 +169,11 @@ const styles = StyleSheet.create({
   },
   messagesList: {
     paddingVertical: 8,
+  },
+  uploadingContainer: {
+    padding: 12,
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
   },
 });
 
