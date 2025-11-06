@@ -5,9 +5,10 @@ import { User } from '../types';
 interface UserListItemProps {
   user: User;
   onPress: () => void;
+  onLongPress?: () => void;
 }
 
-const UserListItem: React.FC<UserListItemProps> = ({ user, onPress }) => {
+const UserListItem: React.FC<UserListItemProps> = ({ user, onPress, onLongPress }) => {
   const formatLastSeen = (timestamp: number) => {
     const now = Date.now();
     const diff = now - timestamp;
@@ -22,7 +23,11 @@ const UserListItem: React.FC<UserListItemProps> = ({ user, onPress }) => {
   };
 
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
+    <TouchableOpacity
+      style={styles.container}
+      onPress={onPress}
+      onLongPress={onLongPress}
+    >
       <View style={styles.avatarContainer}>
         <Image source={{ uri: user.photoURL }} style={styles.avatar} />
         {user.isOnline && <View style={styles.onlineIndicator} />}

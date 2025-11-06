@@ -12,6 +12,7 @@ import ChatScreen from '../screens/ChatScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import UserProfileScreen from '../screens/UserProfileScreen';
 
 // Types
 import {
@@ -41,6 +42,11 @@ const HomeNavigator = () => {
         name="Chat"
         component={ChatScreen}
         options={({ route }) => ({ title: route.params.userName })}
+      />
+      <HomeStack.Screen
+        name="UserProfile"
+        component={UserProfileScreen}
+        options={{ title: 'Profil' }}
       />
     </HomeStack.Navigator>
   );

@@ -12,10 +12,18 @@ import { Ionicons } from '@expo/vector-icons';
 interface InputBarProps {
   onSend: (text: string) => void;
   onSendImage?: () => void;
+  onTyping?: (isTyping: boolean) => void;
 }
 
-const InputBar: React.FC<InputBarProps> = ({ onSend, onSendImage }) => {
+const InputBar: React.FC<InputBarProps> = ({ onSend, onSendImage, onTyping }) => {
   const [text, setText] = useState('');
+
+  const handleTextChange = (newText: string) => {
+    setText(newText);
+    if (onTyping) {
+      onTyping(newText.length > 0);
+    }
+  };
 
   const handleSend = () => {
     if (text.trim()) {
@@ -39,7 +47,7 @@ const InputBar: React.FC<InputBarProps> = ({ onSend, onSendImage }) => {
           style={styles.input}
           placeholder="Xabar yozing..."
           value={text}
-          onChangeText={setText}
+          onChangeText={handleTextChange}
           multiline
           maxLength={1000}
         />

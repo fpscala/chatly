@@ -16,6 +16,9 @@ import {
   sendMessage,
   sendImageMessage,
   subscribeToMessages,
+  markAllMessagesAsRead,
+  updateTypingStatus,
+  subscribeToTypingStatus,
 } from '../services/firestoreService';
 import { uploadChatImage } from '../services/storageService';
 import { auth } from '../firebaseConfig';
@@ -34,7 +37,9 @@ const ChatScreen: React.FC<Props> = ({ route }) => {
   const [chatId, setChatId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     initializeChat();
@@ -51,18 +56,33 @@ const ChatScreen: React.FC<Props> = ({ route }) => {
   useEffect(() => {
     if (!chatId) return;
 
+    const currentUserId = auth.currentUser?.uid;
+    if (!currentUserId) return;
+
     // Xabarlarni real-time kuzatish
-    const unsubscribe = subscribeToMessages(chatId, (newMessages) => {
+    const unsubscribeMessages = subscribeToMessages(chatId, async (newMessages) => {
       setMessages(newMessages);
       setLoading(false);
+
+      // O'qilmagan xabarlarni o'qilgan deb belgilash
+      await markAllMessagesAsRead(chatId, currentUserId);
+
       // Avtomatik scroll to bottom
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     });
 
-    return () => unsubscribe();
-  }, [chatId]);
+    // Typing holatini kuzatish
+    const unsubscribeTyping = subscribeToTypingStatus(chatId, (typing) => {
+      setIsOtherUserTyping(typing[userId] || false);
+    });
+
+    return () => {
+      unsubscribeMessages();
+      unsubscribeTyping();
+    };
+  }, [chatId, userId]);
 
   const initializeChat = async () => {
     try {
@@ -117,6 +137,25 @@ const ChatScreen: React.FC<Props> = ({ route }) => {
     }
   };
 
+  const handleTyping = async (isTyping: boolean) => {
+    if (!chatId || !auth.currentUser?.uid) return;
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Update typing status
+    await updateTypingStatus(chatId, auth.currentUser.uid, isTyping);
+
+    // Auto-clear typing status after 3 seconds
+    if (isTyping) {
+      typingTimeoutRef.current = setTimeout(async () => {
+        await updateTypingStatus(chatId, auth.currentUser.uid, false);
+      }, 3000);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -146,12 +185,21 @@ const ChatScreen: React.FC<Props> = ({ route }) => {
           flatListRef.current?.scrollToEnd({ animated: true })
         }
       />
+      {isOtherUserTyping && (
+        <View style={styles.typingIndicator}>
+          <Text style={styles.typingText}>yozmoqda...</Text>
+        </View>
+      )}
       {uploading && (
         <View style={styles.uploadingContainer}>
           <ActivityIndicator size="small" color="#6200EE" />
         </View>
       )}
-      <InputBar onSend={handleSendMessage} onSendImage={handleSendImage} />
+      <InputBar
+        onSend={handleSendMessage}
+        onSendImage={handleSendImage}
+        onTyping={handleTyping}
+      />
     </KeyboardAvoidingView>
   );
 };
@@ -169,6 +217,16 @@ const styles = StyleSheet.create({
   },
   messagesList: {
     paddingVertical: 8,
+  },
+  typingIndicator: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#F5F5F5',
+  },
+  typingText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
   },
   uploadingContainer: {
     padding: 12,

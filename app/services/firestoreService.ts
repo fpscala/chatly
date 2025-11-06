@@ -167,10 +167,79 @@ export const subscribeToMessages = (
         senderId: data.senderId,
         text: data.text,
         imageURL: data.imageURL,
+        read: data.read || false,
         createdAt: data.createdAt ? (data.createdAt as Timestamp).toMillis() : Date.now(),
       });
     });
     callback(messages);
+  });
+};
+
+// Xabarni o'qilgan deb belgilash
+export const markMessageAsRead = async (
+  chatId: string,
+  messageId: string
+): Promise<void> => {
+  try {
+    await updateDoc(doc(db, 'chats', chatId, 'messages', messageId), {
+      read: true,
+    });
+  } catch (error) {
+    console.error('Error marking message as read:', error);
+  }
+};
+
+// Barcha o'qilmagan xabarlarni o'qilgan deb belgilash
+export const markAllMessagesAsRead = async (
+  chatId: string,
+  currentUserId: string
+): Promise<void> => {
+  try {
+    const messagesRef = collection(db, 'chats', chatId, 'messages');
+    const q = query(
+      messagesRef,
+      where('senderId', '!=', currentUserId),
+      where('read', '==', false)
+    );
+
+    const querySnapshot = await getDocs(q);
+    const promises: Promise<void>[] = [];
+
+    querySnapshot.forEach((docSnapshot) => {
+      promises.push(markMessageAsRead(chatId, docSnapshot.id));
+    });
+
+    await Promise.all(promises);
+  } catch (error) {
+    console.error('Error marking all messages as read:', error);
+  }
+};
+
+// Typing holatni yangilash
+export const updateTypingStatus = async (
+  chatId: string,
+  userId: string,
+  isTyping: boolean
+): Promise<void> => {
+  try {
+    await updateDoc(doc(db, 'chats', chatId), {
+      [`typing.${userId}`]: isTyping,
+    });
+  } catch (error) {
+    console.error('Error updating typing status:', error);
+  }
+};
+
+// Chat typing holatini real-time kuzatish
+export const subscribeToTypingStatus = (
+  chatId: string,
+  callback: (typing: { [userId: string]: boolean }) => void
+) => {
+  const chatRef = doc(db, 'chats', chatId);
+
+  return onSnapshot(chatRef, (snapshot) => {
+    const data = snapshot.data();
+    callback(data?.typing || {});
   });
 };
 

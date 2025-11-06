@@ -82,6 +82,10 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     });
   };
 
+  const handleUserLongPress = (user: User) => {
+    navigation.navigate('UserProfile', { userId: user.id });
+  };
+
   const getFilterIcon = () => {
     switch (genderFilter) {
       case 'male':
@@ -130,7 +134,11 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           data={users}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <UserListItem user={item} onPress={() => handleUserPress(item)} />
+            <UserListItem
+              user={item}
+              onPress={() => handleUserPress(item)}
+              onLongPress={() => handleUserLongPress(item)}
+            />
           )}
           refreshing={refreshing}
           onRefresh={handleRefresh}

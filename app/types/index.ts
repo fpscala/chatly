@@ -27,6 +27,7 @@ export interface Message {
   text?: string;
   imageURL?: string;
   createdAt: number;
+  read?: boolean; // Read receipt
 }
 
 // Chat tipi
@@ -34,6 +35,9 @@ export interface Chat {
   id: string;
   members: string[];
   lastMessage?: Message;
+  typing?: {
+    [userId: string]: boolean; // userId: isTyping
+  };
 }
 
 // Ban tipi
@@ -60,6 +64,7 @@ export type MainTabParamList = {
 export type HomeStackParamList = {
   UserList: undefined;
   Chat: { userId: string; userName: string };
+  UserProfile: { userId: string };
 };
 
 export type ProfileStackParamList = {
