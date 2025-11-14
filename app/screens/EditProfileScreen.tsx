@@ -31,6 +31,9 @@ const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
   const [user, setUser] = useState<User | null>(null);
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
+  const [age, setAge] = useState('');
+  const [location, setLocation] = useState('');
+  const [interests, setInterests] = useState('');
   const [photoURL, setPhotoURL] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -59,7 +62,10 @@ const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
       if (userData) {
         setUser(userData);
         setName(userData.name);
-        setBio(userData.bio);
+        setBio(userData.bio || '');
+        setAge(userData.age?.toString() || '');
+        setLocation(userData.location || '');
+        setInterests(userData.interests?.join(', ') || '');
         setPhotoURL(userData.photoURL);
       }
     } catch (error) {
@@ -105,9 +111,21 @@ const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
         updatedPhotoURL = await uploadProfileImage(currentUserId, photoURL);
       }
 
+      // Interests'ni array'ga aylantirish
+      const interestsArray = interests
+        .split(',')
+        .map((i) => i.trim())
+        .filter((i) => i.length > 0);
+
+      // Age'ni number'ga aylantirish
+      const ageNum = age ? parseInt(age) : undefined;
+
       await updateUserProfile(currentUserId, {
         name: name.trim(),
         bio: bio.trim(),
+        age: ageNum,
+        location: location.trim(),
+        interests: interestsArray,
         photoURL: updatedPhotoURL,
       } as Partial<User>);
 
@@ -158,6 +176,34 @@ const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
           maxLength={200}
         />
         <Text style={styles.charCount}>{bio.length}/200</Text>
+
+        <Text style={styles.label}>Yosh (ixtiyoriy)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Yoshingiz"
+          value={age}
+          onChangeText={setAge}
+          keyboardType="number-pad"
+          maxLength={3}
+        />
+
+        <Text style={styles.label}>Manzil (ixtiyoriy)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Toshkent, O'zbekiston"
+          value={location}
+          onChangeText={setLocation}
+          maxLength={100}
+        />
+
+        <Text style={styles.label}>Qiziqishlar (ixtiyoriy)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Sport, Musiqa, Dasturlash (vergul bilan ajrating)"
+          value={interests}
+          onChangeText={setInterests}
+          maxLength={200}
+        />
 
         <TouchableOpacity
           style={[styles.saveButton, saving && styles.saveButtonDisabled]}

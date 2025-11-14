@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  ScrollView,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -100,18 +101,51 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Image source={{ uri: user.photoURL }} style={styles.avatar} />
         <Text style={styles.name}>{user.name}</Text>
-        <Text style={styles.email}>{user.email}</Text>
+        {user.age && <Text style={styles.age}>{user.age} yosh</Text>}
+        {user.location && (
+          <View style={styles.locationContainer}>
+            <Ionicons name="location" size={14} color="#666" />
+            <Text style={styles.location}>{user.location}</Text>
+          </View>
+        )}
       </View>
 
-      <View style={styles.bioContainer}>
-        <Text style={styles.bioLabel}>Bio</Text>
-        <Text style={styles.bioText}>
-          {user.bio || 'Bio hali qo\'shilmagan'}
-        </Text>
+      {user.bio && (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Bio</Text>
+          <Text style={styles.bioText}>{user.bio}</Text>
+        </View>
+      )}
+
+      {user.interests && user.interests.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Qiziqishlar</Text>
+          <View style={styles.interestsContainer}>
+            {user.interests.map((interest, index) => (
+              <View key={index} style={styles.interestTag}>
+                <Text style={styles.interestText}>{interest}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Ma'lumotlar</Text>
+        <View style={styles.infoRow}>
+          <Ionicons name={user.gender === 'male' ? 'male' : 'female'} size={18} color="#666" />
+          <Text style={styles.infoText}>
+            {user.gender === 'male' ? 'Erkak' : 'Ayol'}
+          </Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Ionicons name="mail" size={18} color="#666" />
+          <Text style={styles.infoText}>{user.email}</Text>
+        </View>
       </View>
 
       <TouchableOpacity
@@ -126,7 +160,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         <Ionicons name="log-out-outline" size={20} color="#F44336" />
         <Text style={styles.logoutButtonText}>Chiqish</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -159,23 +193,63 @@ const styles = StyleSheet.create({
     color: '#000',
     marginBottom: 4,
   },
-  email: {
+  age: {
     fontSize: 16,
     color: '#666',
+    marginBottom: 4,
   },
-  bioContainer: {
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  location: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 4,
+  },
+  section: {
     padding: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
   },
-  bioLabel: {
+  sectionLabel: {
     fontSize: 14,
     color: '#999',
-    marginBottom: 8,
+    marginBottom: 12,
     textTransform: 'uppercase',
+    fontWeight: '600',
   },
   bioText: {
     fontSize: 16,
     color: '#000',
     lineHeight: 24,
+  },
+  interestsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  interestTag: {
+    backgroundColor: '#E8D5FF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  interestText: {
+    fontSize: 14,
+    color: '#6200EE',
+    fontWeight: '600',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  infoText: {
+    fontSize: 16,
+    color: '#666',
+    marginLeft: 12,
   },
   editButton: {
     flexDirection: 'row',

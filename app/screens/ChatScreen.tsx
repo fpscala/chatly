@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
+  Text,
   FlatList,
   StyleSheet,
   ActivityIndicator,
